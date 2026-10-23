@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบหลังบ้านแอดมิน - จัดการออเดอร์และการจอง</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f1f2f6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        header {
+            background-color: #2f3640;
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        header button {
+            background-color: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        header button:hover {
+            background-color: #ee5253;
+        }
+        .section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+        }
+        h2 {
+            border-bottom: 2px solid #2f3640;
+            padding-bottom: 8px;
+            color: #2f3640;
+            margin-top: 0;
+        }
+        /* ตารางแสดงออเดอร์ */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #dfe4ea;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f1f2f6;
+            color: #2f3640;
+        }
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        .no-data {
+            text-align: center;
+            color: #888;
+            padding: 20px;
+        }
+        .clear-btn {
+            background-color: #eb4d4b;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+        .clear-btn:hover {
+            background-color: #d63031;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div>
+                <h1>🛠️ Admin Dashboard</h1>
+                <p style="margin: 5px 0 0 0;">ระบบจัดการร้านอาหารและตรวจสอบออเดอร์ลูกค้า</p>
+            </div>
+            <button onclick="logout()">ออกจากระบบ</button>
+        </header>
+
+        <!-- ส่วนแสดงรายการออเดอร์ทั้งหมด -->
+        <div class="section">
+            <h2>📋 รายการจองโต๊ะและออเดอร์จากลูกค้า</h2>
+            
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ลำดับ</th>
+                            <th>ชื่อลูกค้า</th>
+                            <th>เบอร์โทร</th>
+                            <th>จำนวนคน</th>
+                            <th>วัน-เวลาที่จอง</th>
+                            <th>รายการอาหาร</th>
+                            <th>ราคารวม</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orderTableBody">
+                        <!-- ข้อมูลจะถูกดึงมาแสดงตรงนี้ด้วย JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <button class="clear-btn" onclick="clearAllOrders()">ล้างข้อมูลออเดอร์ทั้งหมด</button>
+        </div>
+    </div>
+
+    <script>
+        // โหลดข้อมูลออเดอร์จาก localStorage เมื่อเปิดหน้าเว็บ
+        function loadOrders() {
+            const tableBody = document.getElementById('orderTableBody');
+            let allOrders = JSON.parse(localStorage.getItem('allOrders')) || [];
+
+            tableBody.innerHTML = '';
+
+            if (allOrders.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="7" class="no-data">ยังไม่มีรายการจองหรือสั่งอาหารในขณะนี้</td></tr>`;
+                return;
+            }
+
+            allOrders.forEach((order, index) => {
+                // จัดรูปแบบรายการอาหารให้แสดงผลสวยงาม
+                let itemsList = '';
+                order.items.forEach(item => {
+                    itemsList += `- ${item.name} (${item.price} ฿)<br>`;
+                });
+
+                // สร้างแถวตารางข้อมูล
+                let row = `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td><b>${order.name}</b></td>
+                        <td>${order.phone}</td>
+                        <td>${order.guests}</td>
+                        <td>${order.datetime.replace('T', ' ')}</td>
+                        <td>${itemsList}</td>
+                        <td><b style="color: #2e7d32;">${order.total} บาท</b></td>
+                    </tr>
+                `;
+                tableBody.innerHTML += row;
+            });
+        }
+
+        // ฟังก์ชันล้างข้อมูลออเดอร์ทั้งหมด
+        function clearAllOrders() {
+            if (confirm('คุณต้องการล้างประวัติออเดอร์ทั้งหมดใช่หรือไม่?')) {
+                localStorage.removeItem('allOrders');
+                loadOrders();
+                alert('ล้างข้อมูลเรียบร้อยแล้ว');
+            }
+        }
+
+        // ฟังก์ชันออกจากระบบ
+        function logout() {
+            window.location.href = 'index.html';
+        }
+
+        // เรียกใช้งานฟังก์ชันโหลดข้อมูลทันทีที่เปิดหน้าเว็บ
+        window.onload = loadOrders;
+    </script>
+
+</body>
+</html>
